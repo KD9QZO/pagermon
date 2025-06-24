@@ -24,6 +24,7 @@ router.use(function (req, res, next) {
     res.locals.frontPopupContent = nconf.get('global:frontPopupContent');
     res.locals.searchLocation = nconf.get('global:searchLocation');
     res.locals.monitorName = nconf.get("global:monitorName");
+    res.locals.faKey = nconf.get("global:faKey");
     next();
 });
 
@@ -31,7 +32,8 @@ router.use(function (req, res, next) {
 router.get('/', function (req, res, next) {
     if (nconf.get('messages:apiSecurity') && !req.isAuthenticated()) {
         req.flash('loginMessage', 'You need to be logged in to access this page');
-        res.redirect('/auth/login');
+        res.status(401).redirect('/auth/login');
+        return;
     }
 
     res.render('index', { pageTitle: 'Home' });
