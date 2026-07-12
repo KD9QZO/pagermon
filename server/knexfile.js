@@ -49,6 +49,9 @@ if(process.env.NODE_ENV === 'test') {
   dbconfig.connection.user = nconf.get('database:username');
   dbconfig.connection.password = nconf.get('database:password');
   dbconfig.connection.database = nconf.get('database:database');
+  if (nconf.get('database:usessl') == true) {
+    dbconfig.connection.ssl.rejectUnauthorized(false);
+  }
 } else if (dbtype == 'oracledb') {
   dbconfig.connection.connectString = nconf.get('database:connectString');
   dbconfig.connection.user = nconf.get('database:username');

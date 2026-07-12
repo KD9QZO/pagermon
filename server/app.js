@@ -109,15 +109,17 @@ var io = require('socket.io')(server);
     });
     //Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
     io.sockets.setMaxListeners(20);
-    
+
     // Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
-/*     io.sockets.setMaxListeners(20);
+/*
+	io.sockets.setMaxListeners(20);
     io.sockets.on('connection', function(socket) {
             logger.main.debug(`User with group connected to socket`);
             const userGroup = socket.request?.user?.group || 'anonymous';
             socket.join(userGroup)
             socket.removeAllListeners();
-    }); */
+    });
+*/
 
 io.sockets.on('connection', function (socket) {
     socket.removeAllListeners();
@@ -219,7 +221,7 @@ if (dbtype == 'mysql') {
   if (!cronvalidate.isValidCron(cronartime,{ seconds: true })) {
     logger.main.warn('CRON: Invalid CRON configuration in config file. Defaulting to: "0 5,35 * * * *" ')
     cronartime = "0 5,35 * * * *";
-  } 
+  }
   var aliasRefreshJob = require('cron').CronJob;
   new aliasRefreshJob(cronartime, function() {
     var refreshRequired = nconf.get('database:aliasRefreshRequired')
@@ -240,8 +242,8 @@ if (dbtype == 'mysql') {
           logger.main.info('CRON: Alias Refresh Successful')
       })
       .catch((err) => {
-        logger.main.error('CRON: Error refreshing aliases' + err); 
-        console.timeEnd('updateMap'); 
+        logger.main.error('CRON: Error refreshing aliases' + err);
+        console.timeEnd('updateMap');
       })
     } else {
       logger.main.debug('CRON: Alias Refresh not Required, Skipping.')
@@ -249,12 +251,12 @@ if (dbtype == 'mysql') {
   }, null, true);
 }
 
-//Disable all logging for tests
-if(process.env.NODE_ENV === 'test') { 
-  logger.main.silent = true
-  logger.auth.silent = true
-  logger.db.silent = true
-  logger.http.silent = true
+// Disable all logging for tests
+if (process.env.NODE_ENV === 'test') {
+	logger.main.silent = true
+	logger.auth.silent = true
+	logger.db.silent = true
+	logger.http.silent = true
 }
 
 module.exports = app;
@@ -348,9 +350,9 @@ function checkForDbDriver(driver) {
 
 
 function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-    logger.main.info('Listening on ' + bind);
+	var addr = server.address();
+	var bind = typeof addr === 'string'
+			? 'pipe ' + addr
+			: 'port ' + addr.port;
+	logger.main.info('Listening on ' + bind);
 }
