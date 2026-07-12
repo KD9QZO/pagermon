@@ -83,9 +83,10 @@ build/Release/
 node_modules/
 **/node_modules/
 jspm_packages/
-**/jspm_packages/
 package-lock.json
+**/jspm_packages/
 **/package-lock.json
+client/package-lock.json
 
 
 ## Typescript v1 declaration files ##
