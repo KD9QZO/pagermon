@@ -1,12 +1,12 @@
 var debug = require('debug')('pagermon:server');
 var io = require('@pm2/io').init({
-    http          : true, // HTTP routes logging (default: true)
-    ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (Default: [])
-    errors        : true, // Exceptions logging (default: true)
-    custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
-    network       : true, // Network monitoring at the application level
-    ports         : true,  // Shows which ports your app is listening on (default: false)
-    transactions  : true
+	http: true,										// HTTP routes logging (default: true)
+	ignore_routes: [/socket\.io/, /notFound/],		// Ignore http routes with this pattern (Default: [])
+	errors: true,									// Exceptions logging (default: true)
+	custom_probes: true,							// Auto expose JS Loop Latency and HTTP req/s as custom metrics
+	network: true,									// Network monitoring at the application level
+	ports: true,									// Shows which ports your app is listening on (default: false)
+	transactions: true
 });
 var http = require('http');
 var compression = require('compression');
@@ -24,28 +24,31 @@ const { version } = require('./package.json');
 
 
 process.on('SIGINT', function() {
-    console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
-    process.exit(1);
+	console.log("\nGracefully shutting down from SIGINT (Ctrl-C)");
+	process.exit(1);
 });
 
 // create config file if it does not exist, and set defaults
 var conf_defaults = require('./config/default.json');
 var confFile = './config/config.json';
-if( ! fs.existsSync(confFile) ) {
-    fs.writeFileSync( confFile, JSON.stringify(conf_defaults,null, 2) );
+if (!fs.existsSync(confFile)) {
+	fs.writeFileSync(confFile, JSON.stringify(conf_defaults,null, 2));
 }
+
 // load the config file
 var nconf = require('nconf');
-    nconf.file({file: confFile});
-    nconf.load();
+nconf.file({
+	file: confFile
+});
+nconf.load();
 
 //Load current theme
 var theme = nconf.get('global:theme')
 // set the theme if none found, for backwards compatibility
 if (!theme) {
-  nconf.set('global:theme', "default");
-  nconf.save();
-  var theme = nconf.get('global:theme')
+	nconf.set('global:theme', "default");
+	nconf.save();
+	var theme = nconf.get('global:theme')
 }
 
 var dbtype = nconf.get('database:type');
@@ -61,23 +64,23 @@ if (dbtype == 'pg' || dbtype == 'mysql' || dbtype == 'mssql') {
 var azureEnable = nconf.get('monitoring:azureEnable')
 var azureKey = nconf.get('monitoring:azureKey')
 if (azureEnable) {
-  logger.main.debug('Starting Azure Application Insights')
-  const appInsights = require('applicationinsights');
-  appInsights.setup(azureKey)
-             .setAutoDependencyCorrelation(true)
-             .setAutoCollectRequests(true)
-             .setAutoCollectPerformance(true)
-             .setAutoCollectExceptions(true)
-             .setAutoCollectDependencies(true)
-             .setAutoCollectConsole(true)
-             .setUseDiskRetryCaching(true)
-             .start();
+	logger.main.debug('Starting Azure Application Insights')
+	const appInsights = require('applicationinsights');
+	appInsights.setup(azureKey)
+			.setAutoDependencyCorrelation(true)
+			.setAutoCollectRequests(true)
+			.setAutoCollectPerformance(true)
+			.setAutoCollectExceptions(true)
+			.setAutoCollectDependencies(true)
+			.setAutoCollectConsole(true)
+			.setUseDiskRetryCaching(true)
+			.start();
 }
 
 checkForDbDriver(nconf.get('database:type'));
 
 var dbinit = require('./db');
-    dbinit.init();
+dbinit.init();
 var db = require('./knex/knex.js');
 
 var passport = require('./auth/local');
@@ -90,34 +93,36 @@ var auth = require('./routes/auth');
 
 var port = normalizePort(process.env.PORT || '3000');
 var app = express();
-    app.set('port', port);
-    // view engine setup
-    app.set('views', path.join(__dirname,'themes',theme, 'views'));
-    app.set('view engine', 'ejs');
-    app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+app.set('port', port);
+// view engine setup
+app.set('views', path.join(__dirname,'themes',theme, 'views'));
+app.set('view engine', 'ejs');
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 
 
 
 var server = http.createServer(app);
 var io = require('socket.io')(server);
-    server.listen(port);
-    server.on('error', onError);
-    server.on('listening', onListening);
-    // Set connection timeout to prevent long running queries failing on large databases - mostly capacode refresh on MySQL
-    server.on('connection', function(connection) {
-      connection.setTimeout(600 * 1000);
-    });
-    // Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
-    io.sockets.setMaxListeners(20);
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+// Set connection timeout to prevent long running queries failing on large databases - mostly capacode refresh on MySQL
+server.on('connection', function(connection) {
+	connection.setTimeout(600 * 1000);
+});
+// Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
+io.sockets.setMaxListeners(20);
 
-    // Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
-/*	io.sockets.setMaxListeners(20);
-    io.sockets.on('connection', function(socket) {
-            logger.main.debug(`User with group connected to socket`);
-            const userGroup = socket.request?.user?.group || 'anonymous';
-            socket.join(userGroup)
-            socket.removeAllListeners();
-    }); */
+// Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
+/* ------------------------------------------------------------------------------------------------------------------ *
+io.sockets.setMaxListeners(20);
+io.sockets.on('connection', function(socket) {
+	logger.main.debug(`User with group connected to socket`);
+	const userGroup = socket.request?.user?.group || 'anonymous';
+	socket.join(userGroup)
+	socket.removeAllListeners();
+});
+ * ------------------------------------------------------------------------------------------------------------------ */
 
 io.sockets.on('connection', function (socket) {
 	socket.removeAllListeners();
@@ -129,12 +134,13 @@ app.use(favicon(path.join(__dirname,'themes',theme, 'public', 'favicon.ico')));
 
 // set socket.io to be shared across all modules
 app.use(function(req, res, next) {
-    req.io = io;
-    next();
+	req.io = io;
+	next();
 });
 
 // session secret is controlled by config
 var secret = nconf.get('global:sessionSecret');
+
 // compress all responses
 app.use(compression());
 app.use(require("morgan")("combined", {
@@ -150,15 +156,15 @@ app.use(bodyParser.urlencoded({
 app.use(cookieParser());
 
 var sessSet = {
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }, // 1 week
-    store: new SQLiteStore,
-    saveUninitialized: true,
-    resave: 'true',
-    secret: secret
+	cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }, // 1 week
+	store: new SQLiteStore,
+	saveUninitialized: true,
+	resave: 'true',
+	secret: secret
 }
 
 if (process.env.HOSTNAME && process.env.USE_COOKIE_HOST)
-    sessSet.cookie.domain = '.' + process.env.HOSTNAME;
+	sessSet.cookie.domain = '.' + process.env.HOSTNAME;
 
 app.use(session(sessSet));
 app.use(passport.initialize());
@@ -187,9 +193,9 @@ app.use('/auth', auth);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+	var err = new Error('Not Found');
+	err.status = 404;
+	next(err);
 });
 
 // error handler
@@ -262,43 +268,41 @@ if (process.env.NODE_ENV === 'test') {
 module.exports = app;
 
 function normalizePort(val) {
-  var port = parseInt(val, 10);
+	var port = parseInt(val, 10);
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+	if (isNaN(port)) {
+		// named pipe
+		return val;
+	}
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+	if (port >= 0) {
+		// port number
+		return port;
+	}
 
-  return false;
+	return false;
 }
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+	if (error.syscall !== 'listen') {
+		throw error;
+	}
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+	var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
+	// handle specific listen errors with friendly messages
+	switch (error.code) {
+		case 'EACCES':
+			console.error(bind + ' requires elevated privileges');
+			process.exit(1);
+			break;
+		case 'EADDRINUSE':
+			console.error(bind + ' is already in use');
+			process.exit(1);
+			break;
+		default:
+			throw error;
+	}
 }
 
 function checkForDbDriver(driver) {
@@ -309,9 +313,7 @@ function checkForDbDriver(driver) {
         require('sqlite3');
       } catch (e) {
         logger.main.error(`Selected database type is sqlite3, but npm package sqlite3 was not installed.`);
-        logger.main.error(
-          `Please run npm i sqlite3 to install or refer to https://www.npmjs.com/package/sqlite3 for reference`
-        );
+        logger.main.error(`Please run npm i sqlite3 to install or refer to https://www.npmjs.com/package/sqlite3 for reference`);
         process.exit(1);
       }
       break;
@@ -321,9 +323,7 @@ function checkForDbDriver(driver) {
         require('knex');
       } catch (e) {
         logger.main.error(`Selected database type is mysql, but npm package knex was not installed.`);
-        logger.main.error(
-          `Please run npm i knex to install or refer to https://www.npmjs.com/package/knex for reference`
-        );
+        logger.main.error(`Please run npm i knex to install or refer to https://www.npmjs.com/package/knex for reference`);
         process.exit(1);
       }
       break;
@@ -333,9 +333,7 @@ function checkForDbDriver(driver) {
         require('oracledb');
       } catch (e) {
         logger.main.error(`Selected database type is oracledb, but npm package oracledb was not installed.`);
-        logger.main.error(
-          `Please run npm i oracledb to install or refer to https://www.npmjs.com/package/oracledb for reference`
-        );
+        logger.main.error(`Please run npm i oracledb to install or refer to https://www.npmjs.com/package/oracledb for reference`);
         process.exit(1);
       }
       break;
@@ -351,8 +349,6 @@ function checkForDbDriver(driver) {
 
 function onListening() {
 	var addr = server.address();
-	var bind = typeof addr === 'string'
-			? 'pipe ' + addr
-			: 'port ' + addr.port;
+	var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
 	logger.main.info('Listening on ' + bind);
 }

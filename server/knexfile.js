@@ -45,18 +45,74 @@ if (process.env.NODE_ENV === 'test') {
 } else if (dbtype == 'sqlite3') {
 	dbconfig.connection.filename = nconf.get('database:file');
 } else if (dbtype == 'mysql') {
+	dbconfig.client = 'mysql2';
 	dbconfig.connection.host = nconf.get('database:server');
 	dbconfig.connection.port = nconf.get('database:port');
 	dbconfig.connection.user = nconf.get('database:username');
 	dbconfig.connection.password = nconf.get('database:password');
 	dbconfig.connection.database = nconf.get('database:database');
 
+	// Support different authentication methods
+	const authMethod = nconf.get('database:auth_method') || 'default';
+	if (authMethod === 'mysql_native_password') {
+		dbconfig.connection.authPlugins = {
+			mysql_native_password: () => {
+				return require('mysql2/lib/auth_plugins/mysql_native_password');
+			}
+		};
+	} else if (authMethod === 'sha256_password') {
+		dbconfig.connection.authPlugins = {
+			sha256_password: () => {
+				return require('mysql2/lib/auth_plugins/sha256_password');
+			}
+		};
+	} else if (authMethod === 'caching_sha2_password') {
+		dbconfig.connection.authPlugins = {
+			caching_sha2_password: () => {
+				return require('mysql2/lib/auth_plugins/caching_sha2_password');
+			}
+		};
+	}
+
+	// Add support for SSL if configured
+	if (nconf.get('database:ssl')) {
+		if (nconf.get('database:sslverify')) {
+			dbconfig.connection.ssl = {
+				rejectUnauthorized: true
+			};
+		} else {
+			dbconfig.connection.ssl = {
+				rejectUnauthorized: false
+			};
+		}
+	}
+
+	// Add connection pool configuration for better performance
+	dbconfig.pool = {
+		min: 2,
+		max: 10,
+		createTimeoutMillis: 3000,
+		acquireTimeoutMillis: 30000,
+		idleTimeoutMillis: 30000,
+		reapIntervalMillis: 1000,
+		createRetryIntervalMillis: 100
+	};
+
 	// FIX HERE: Properly assign the SSL configuration object
+/*
 	if (nconf.get('database:usessl') == true) {
 		dbconfig.connection.ssl = {
 			rejectUnauthorized: false
 		};
 	}
+*/
+} else if (dbtype == 'pgsql') {
+	dbconfig.client = 'pg';
+	dbconfig.connection.host = nconf.get('database:server');
+	dbconfig.connection.port = nconf.get('database:port');
+	dbconfig.connection.user = nconf.get('database:username');
+	dbconfig.connection.password = nconf.get('database:password');
+	dbconfig.connection.database = nconf.get('database:database');
 } else if (dbtype == 'oracledb') {
 	dbconfig.connection.connectString = nconf.get('database:connectString');
 	dbconfig.connection.user = nconf.get('database:username');
