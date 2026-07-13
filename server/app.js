@@ -103,34 +103,32 @@ var io = require('socket.io')(server);
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
-    //Set connection timeout to prevent long running queries failing on large databases - mostly capacode refresh on MySQL
+    // Set connection timeout to prevent long running queries failing on large databases - mostly capacode refresh on MySQL
     server.on('connection', function(connection) {
       connection.setTimeout(600 * 1000);
     });
-    //Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
+    // Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
     io.sockets.setMaxListeners(20);
 
     // Lets set setMaxListeners to a decent number - not to high to allow the memory leak warking to still trigger
-/*
-	io.sockets.setMaxListeners(20);
+/*	io.sockets.setMaxListeners(20);
     io.sockets.on('connection', function(socket) {
             logger.main.debug(`User with group connected to socket`);
             const userGroup = socket.request?.user?.group || 'anonymous';
             socket.join(userGroup)
             socket.removeAllListeners();
-    });
-*/
+    }); */
 
 io.sockets.on('connection', function (socket) {
-    socket.removeAllListeners();
-    const userGroup = socket.request?.user?.role || 'anonymous';
-    socket.join(userGroup);
+	socket.removeAllListeners();
+	const userGroup = (socket.request && socket.request.user && socket.request.user.role) || 'anonymous';
+	socket.join(userGroup);
 });
 
 app.use(favicon(path.join(__dirname,'themes',theme, 'public', 'favicon.ico')));
 
 // set socket.io to be shared across all modules
-app.use(function(req,res,next){
+app.use(function(req, res, next) {
     req.io = io;
     next();
 });
@@ -139,13 +137,15 @@ app.use(function(req,res,next){
 var secret = nconf.get('global:sessionSecret');
 // compress all responses
 app.use(compression());
-app.use(require("morgan")("combined", { "stream": logger.http.stream }));
+app.use(require("morgan")("combined", {
+	"stream": logger.http.stream
+}));
 app.use(bodyParser.json({
-  limit: '1mb',
+	limit: '1mb',
 }));       // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     
-  extended: true,
-  limit: '1mb',
+app.use(bodyParser.urlencoded({
+	extended: true,
+	limit: '1mb',
 })); // to support URL-encoded bodies
 app.use(cookieParser());
 
@@ -158,7 +158,7 @@ var sessSet = {
 }
 
 if (process.env.HOSTNAME && process.env.USE_COOKIE_HOST)
-    sessSet.cookie.domain = '.'+process.env.HOSTNAME;
+    sessSet.cookie.domain = '.' + process.env.HOSTNAME;
 
 app.use(session(sessSet));
 app.use(passport.initialize());
@@ -167,9 +167,9 @@ app.use(flash());
 app.use(express.static(path.join(__dirname,'themes',theme, 'public')));
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 app.use(function(req, res, next) {
-  res.locals.version = version;
-  res.locals.loglevel = nconf.get('global:loglevel') || 'info';
-  next();
+	res.locals.version = version;
+	res.locals.loglevel = nconf.get('global:loglevel') || 'info';
+	next();
 });
 
 const wrapMiddleware = middleware => (socket, next) => middleware(socket.request, {}, next);
